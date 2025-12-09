@@ -15,7 +15,7 @@ const serializeTransction = (obj) => {
     serialized.amount = obj.amount.toNumber();
   }
 
-  return serialized
+  return serialized;
 };
 export async function createAccount(data) {
   try {
@@ -59,7 +59,8 @@ export async function createAccount(data) {
       },
     });
 
-    const serializeAccount = account.map(serializeTransction);
+    // const serializeAccount =  await account.map(serializeTransction);
+    const serializeAccount =  serializeTransction(account);
 
     return { success: true, data: serializeAccount };
   } catch (error) {
@@ -72,13 +73,13 @@ export async function getUserAccounts() {
 
   if (!userId) throw new Error("Unauthorised");
 
-  const user = await db.user.findMany({
+  const user = await db.user.findUnique({
     where: { clerkUserId: userId },
   });
   if (!user) {
     throw new Error("User Not Fount");
   }
-  const accounts = db.account.findMany({
+  const accounts = await db.account.findMany({
     where: { userId: user.id },
     orderBy: { createdAt: "desc" },
     include: {
@@ -90,7 +91,12 @@ export async function getUserAccounts() {
     },
   });
 
-  const serializeAccount = serializeTransction(accounts);
+  // const serializeAccount = serializeTransction(accounts);
 
-  return serializeAccount;
+  const serialized = accounts.map((a) => ({
+    ...a,
+    balance: a.balance.toNumber(), // convert Decimal → number
+  }));
+
+  return serialized;
 }

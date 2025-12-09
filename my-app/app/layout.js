@@ -14,7 +14,7 @@ export default function RootLayout({ children }) {
     <ClerkProvider>
       <html lang="en">
         <body className={` ${inter.className}`}>
-          <Toaster richColors/>
+          <Toaster richColors />
           <Header />
           <div className="min-h-screen overflow-x-hidden">{children}</div>
           <fotter className="bg-blue-400 text-center h-20 ">
