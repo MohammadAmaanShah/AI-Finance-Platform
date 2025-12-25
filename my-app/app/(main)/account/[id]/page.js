@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import React, { Suspense } from "react";
 import TransactionTable from "../_components/transaction-table";
 import { BarLoader } from "react-spinners";
-
+import AccountChart from "../_components/AccountChart";
 const Accountpage = async ({ params }) => {
   const { id } = await params;
 
@@ -17,7 +17,7 @@ const Accountpage = async ({ params }) => {
   }
   return (
     <div>
-      <div className="space-y-8 px-5">
+      <div className="space-y-8 px-7">
         <div className="flex gap-4 items-end justify-between">
           <div>
             <h1 className="text-5xl sm:text-6xl font-bold tracking-tight gradient gradient-title capitalize">
@@ -41,7 +41,11 @@ const Accountpage = async ({ params }) => {
       </div>
 
       {/* {chart section } */}
-
+      <Suspense
+        fallback={<BarLoader className="mt-4" color="#9333ea" width={"100%"} />}
+      >
+        <AccountChart transactions={transactions} />
+      </Suspense>
       {/* tansactionstable */}
 
       <Suspense

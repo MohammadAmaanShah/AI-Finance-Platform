@@ -5,8 +5,8 @@ import { Suspense } from "react";
 export default function Layout() {
   return (
     <div className="px-5">
-      <div className="flex items-center justify-between mb-5">
-        <h1 className="text-6xl font-bold tracking-tight gradient-title">
+      <div className="flex items-center justify-between mb-5 ">
+        <h1 className="md:text-6xl text-4xl ml-5 font-bold tracking-tight gradient gradient-title">
           Dashboard
         </h1>
       </div>
