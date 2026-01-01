@@ -86,63 +86,7 @@ export async function getAccountWithTransactions(accountId) {
   };
 }
 
-// export async function bulkDeleteTransactions(transactionIds) {
-//   try {
-//     const { userId } = await auth();
-//     if (!userId) throw new Error("Unauthorized");
 
-//     const user = await db.user.findUnique({
-//       where: { clerkUserId: userId },
-//     });
-
-//     if (!user) throw new Error("User not found");
-
-//     // 1. Get all transactions to be deleted
-//     const transactions = await db.transaction.findMany({
-//       where: {
-//         id: { in: transactionIds },
-//         userId: user.id,
-//       },
-//     });
-
-//     // 2. Calculate balance changes
-//     const accountBalanceChanges = transactions.reduce((acc, t) => {
-//       const change = t.type === "EXPENSE" ? -t.amount : t.amount;
-
-//       acc[t.accountId] = (acc[t.accountId] || 0) + change;
-//       return acc;
-//     }, {});
-
-//     // 3. Execute DB operations
-//     await db.$transaction(async (tx) => {
-//       // delete transactions
-//       await tx.transaction.deleteMany({
-//         where: {
-//           id: { in: transactionIds },
-//           userId: user.id,
-//         },
-//       });
-
-//       // update account balances
-//       for (const [accountId, balanceChange] of Object.entries(
-//         accountBalanceChanges
-//       )) {
-//         await tx.account.update({
-//           where: { id: accountId },
-//           data: { balance: { increment: balanceChange } },
-//         });
-//       }
-//     });
-
-//     // Revalidate affected pages
-//     revalidatePath("/dashboard");
-//     revalidatePath("/account/[id]");
-
-//     return { success: true };
-//   } catch (error) {
-//     return { success: false, error: error.message };
-//   }
-// }
 
 export async function bulkDeleteTransactions(transactionIds) {
   try {
