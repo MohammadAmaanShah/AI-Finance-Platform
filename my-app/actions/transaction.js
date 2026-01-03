@@ -1,6 +1,7 @@
-import { db } from "@/lib/prisma";
-import { auth } from "@clerk/nextjs/server" 
+"use server";
 
+import { db } from "@/lib/prisma";
+import { auth } from "@clerk/nextjs/server";
 
 const serializeAmount = (obj) => ({
   ...obj,
