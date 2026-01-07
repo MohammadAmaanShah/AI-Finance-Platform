@@ -8,7 +8,6 @@ import {
   Section,
   Text,
 } from "@react-email/components";
-import * as React from "react";
 
 // Dummy data for preview
 const PREVIEW_DATA = {
@@ -46,15 +45,11 @@ const PREVIEW_DATA = {
   },
 };
 
-export default function Email(
-  {
-    userName = "",
-    type = "budget-alert",
-    data = null
-  }
-) {
-
-
+export default function EmailTemplate({
+  userName = "",
+  type = "monthly-report",
+  data = {},
+}) {
   if (type === "monthly-report") {
     return (
       <Html>

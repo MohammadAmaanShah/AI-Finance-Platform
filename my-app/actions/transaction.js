@@ -2,7 +2,9 @@
 
 import { db } from "@/lib/prisma";
 import { auth } from "@clerk/nextjs/server";
-
+import { revalidatePath } from "next/cache";
+import { request } from "@arcjet/next";
+import aj from "@/lib/arcjet";
 const serializeAmount = (obj) => ({
   ...obj,
   amount: obj.amount.toNumber(),
@@ -84,7 +86,7 @@ export async function createTransaction(data) {
     });
 
     revalidatePath("/dashboard");
-    revalidatePath(`/account/${transaction.accountId}`);
+    revalidatePath(`/account/${transaction}`);
 
     return { success: true, data: serializeAmount(transaction) };
   } catch (error) {

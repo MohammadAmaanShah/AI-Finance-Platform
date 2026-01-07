@@ -26,7 +26,7 @@ const Hero = () => {
   return (
     <div className="pb-20 px-4">
       <div className="mx-auto container text-center">
-        <h1 className="text-5xl md:text-8xl lg:text-[105px] pb-6  gradient gradient-title">
+        <h1 className="text-5xl md:text-8xl lg:text-[145px] pb-6  gradient gradient-title">
           Manage your finances <br /> with Intellegence
         </h1>
         <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
@@ -50,9 +50,9 @@ const Hero = () => {
         <div ref={imgRef} className="hero-image">
           <Image
             src={"/banner.jpeg"}
-            width={1280}
+            width={1580}
             height={720}
-            alt="iamge"
+            alt="image"
             className="shadow-2xl rounded-lg border mx-auto"
           />
         </div>
