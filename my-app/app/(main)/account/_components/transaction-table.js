@@ -77,14 +77,14 @@ const TransactionTable = ({ transactions }) => {
     setSelectedId((current) =>
       current.length == filteredAndSortedTransactions.length
         ? []
-        : filteredAndSortedTransactions.map((i) => i.id)
+        : filteredAndSortedTransactions.map((i) => i.id),
     );
   };
   const handleSelect = (id) => {
     setSelectedId((current) =>
       current.includes(id)
         ? current.filter((item) => item != id)
-        : [...current, id]
+        : [...current, id],
     );
   };
 
@@ -162,7 +162,7 @@ const TransactionTable = ({ transactions }) => {
   const handleBulkDelete = async () => {
     if (
       !window.confirm(
-        `Are you sure you want to delete ${selectedId.length} transactions?`
+        `Are you sure you want to delete ${selectedId.length} transactions?`,
       )
     )
       return;
@@ -376,7 +376,7 @@ const TransactionTable = ({ transactions }) => {
                               <div className="font-medium">
                                 {format(
                                   new Date(transaction.nextRecurringDate),
-                                  "PP"
+                                  "PP",
                                 )}
                               </div>
                             </div>
@@ -401,7 +401,7 @@ const TransactionTable = ({ transactions }) => {
                             className="cursor-pointer"
                             onClick={() => {
                               router.push(
-                                `transaction/create?edit=${transaction.id}`
+                                `/transaction/create?edit=${transaction.id}`,
                               );
                             }}
                           >

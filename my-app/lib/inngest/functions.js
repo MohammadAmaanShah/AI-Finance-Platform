@@ -70,13 +70,13 @@ export const processRecurringTransaction = inngest.createFunction(
             lastProcessed: new Date(),
             nextRecurringDate: calculateNextRecurringDate(
               new Date(),
-              transaction.recurringInterval
+              transaction.recurringInterval,
             ),
           },
         });
       });
     });
-  }
+  },
 );
 
 // Trigger recurring transactions with batching
@@ -104,7 +104,7 @@ export const triggerRecurringTransactions = inngest.createFunction(
             ],
           },
         });
-      }
+      },
     );
 
     // Send event for each recurring transaction in batches
@@ -122,47 +122,47 @@ export const triggerRecurringTransactions = inngest.createFunction(
     }
 
     return { triggered: recurringTransactions.length };
-  }
+  },
 );
 
 // 2. Monthly Report Generation
-// async function generateFinancialInsights(stats, month) {
-//   const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-//   const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+async function generateFinancialInsights(stats, month) {
+  const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-//   const prompt = `
-//     Analyze this financial data and provide 3 concise, actionable insights.
-//     Focus on spending patterns and practical advice.
-//     Keep it friendly and conversational.
+  const prompt = `
+    Analyze this financial data and provide 3 concise, actionable insights.
+    Focus on spending patterns and practical advice.
+    Keep it friendly and conversational.
 
-//     Financial Data for ${month}:
-//     - Total Income: $${stats.totalIncome}
-//     - Total Expenses: $${stats.totalExpenses}
-//     - Net Income: $${stats.totalIncome - stats.totalExpenses}
-//     - Expense Categories: ${Object.entries(stats.byCategory)
-//       .map(([category, amount]) => `${category}: $${amount}`)
-//       .join(", ")}
+    Financial Data for ${month}:
+    - Total Income: $${stats.totalIncome}
+    - Total Expenses: $${stats.totalExpenses}
+    - Net Income: $${stats.totalIncome - stats.totalExpenses}
+    - Expense Categories: ${Object.entries(stats.byCategory)
+      .map(([category, amount]) => `${category}: $${amount}`)
+      .join(", ")}
 
-//     Format the response as a JSON array of strings, like this:
-//     ["insight 1", "insight 2", "insight 3"]
-//   `;
+    Format the response as a JSON array of strings, like this:
+    ["insight 1", "insight 2", "insight 3"]
+  `;
 
-//   try {
-//     const result = await model.generateContent(prompt);
-//     const response = result.response;
-//     const text = response.text();
-//     const cleanedText = text.replace(/```(?:json)?\n?/g, "").trim();
+  try {
+    const result = await model.generateContent(prompt);
+    const response = result.response;
+    const text = response.text();
+    const cleanedText = text.replace(/```(?:json)?\n?/g, "").trim();
 
-//     return JSON.parse(cleanedText);
-//   } catch (error) {
-//     console.error("Error generating insights:", error);
-//     return [
-//       "Your highest expense category this month might need attention.",
-//       "Consider setting up a budget for better financial management.",
-//       "Track your recurring expenses to identify potential savings.",
-//     ];
-//   }
-// }
+    return JSON.parse(cleanedText);
+  } catch (error) {
+    console.error("Error generating insights:", error);
+    return [
+      "Your highest expense category this month might need attention.",
+      "Consider setting up a budget for better financial management.",
+      "Track your recurring expenses to identify potential savings.",
+    ];
+  }
+}
 
 // // export const generateMonthlyReports = inngest.createFunction(
 //   {
@@ -287,7 +287,7 @@ export const checkBudgetAlerts = inngest.createFunction(
         }
       });
     }
-  }
+  },
 );
 
 function isNewMonth(lastAlertDate, currentDate) {
@@ -359,6 +359,52 @@ async function getMonthlyStats(userId, month) {
       totalIncome: 0,
       byCategory: {},
       transactionCount: transactions.length,
-    }
+    },
   );
 }
+
+export const generateMonthlyReports = inngest.createFunction(
+  {
+    id: "generate-monthly-reports",
+    name: "Generate Monthly Reports",
+  },
+  { cron: "0 0 1 * *" }, // First day of each month
+  async ({ step }) => {
+    const users = await step.run("fetch-users", async () => {
+      return await db.user.findMany({
+        include: { accounts: true },
+      });
+    });
+
+    for (const user of users) {
+      await step.run(`generate-report-${user.id}`, async () => {
+        const lastMonth = new Date();
+        lastMonth.setMonth(lastMonth.getMonth() - 1);
+
+        const stats = await getMonthlyStats(user.id, lastMonth);
+        const monthName = lastMonth.toLocaleString("default", {
+          month: "long",
+        });
+
+        // Generate AI insights
+        const insights = await generateFinancialInsights(stats, monthName);
+
+        await sendEmail({
+          to: user.email,
+          subject: `Your Monthly Financial Report - ${monthName}`,
+          react: EmailTemplate({
+            userName: user.name,
+            type: "monthly-report",
+            data: {
+              stats,
+              month: monthName,
+              insights,
+            },
+          }),
+        });
+      });
+    }
+
+    return { processed: users.length };
+  },
+);

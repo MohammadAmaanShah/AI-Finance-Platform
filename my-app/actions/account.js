@@ -86,8 +86,6 @@ export async function getAccountWithTransactions(accountId) {
   };
 }
 
-
-
 export async function bulkDeleteTransactions(transactionIds) {
   try {
     const { userId } = await auth();
@@ -129,7 +127,7 @@ export async function bulkDeleteTransactions(transactionIds) {
 
       // Update account balances
       for (const [accountId, balanceChange] of Object.entries(
-        accountBalanceChanges
+        accountBalanceChanges,
       )) {
         await tx.account.update({
           where: { id: accountId },
