@@ -14,6 +14,7 @@ const serializeAmount = (obj) => ({
 
 // const genAI = GoogleGenerativeAI;
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+
 // Create Transaction
 export async function createTransaction(data) {
   try {
