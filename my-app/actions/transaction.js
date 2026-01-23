@@ -208,6 +208,7 @@ export async function getTransaction(id) {
 
   return serializeAmount(transaction);
 }
+
 export async function updateTransaction(id, data) {
   try {
     const { userId } = await auth();

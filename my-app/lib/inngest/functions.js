@@ -131,7 +131,7 @@ async function generateFinancialInsights(stats, month) {
   const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
   const prompt = `
-    Analyze this financial data and provide 3 concise, actionable insights.
+    Analyze this financial data and provide 6-7 concise, actionable insights.
     Focus on spending patterns and practical advice.
     Keep it friendly and conversational.
 
@@ -144,7 +144,7 @@ async function generateFinancialInsights(stats, month) {
       .join(", ")}
 
     Format the response as a JSON array of strings, like this:
-    ["insight 1", "insight 2", "insight 3"]
+    ["insight 1", "insight 2", "insight 3",...]
   `;
 
   try {
