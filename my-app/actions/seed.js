@@ -107,3 +107,53 @@ export async function seedTransactions() {
     return { success: false, error: error.message };
   }
 }
+
+// import { db } from "@/lib/prisma";
+
+// const prisma = new PrismaClient();
+
+async function main() {
+  const predefinedCategories = [
+    "Food",
+    "Rent",
+    "Travel",
+    "Shopping",
+    "Entertainment",
+    "Utilities",
+    "Healthcare",
+    "Salary",
+    "Freelance",
+    "Business",
+    "Interest",
+    "Investments",
+  ];
+
+  for (const name of predefinedCategories) {
+    await db.category.upsert({
+      where: {
+        // matches @@unique([userId, name])
+        userId_name: {
+          userId: null,
+          name,
+        },
+      },
+      update: {},
+      create: {
+        name,
+        userId: null, // system / predefined category
+      },
+    });
+  }
+}
+
+main()
+  .then(() => {
+    console.log("✅ Predefined categories seeded");
+  })
+  .catch((e) => {
+    console.error("❌ Seeding failed", e);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await db.$disconnect();
+  });

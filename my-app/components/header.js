@@ -15,7 +15,7 @@ import { checkUser } from "@/lib/checkUser";
 
 const Header = async () => {
   await checkUser();
-  
+
   return (
     <header className="fixed top-0 w-full bg-white/80 backdrop-blur-md z-50 border-b">
       <nav className="container mx-auto px-4 py-4 flex items-center justify-between">
@@ -43,6 +43,11 @@ const Header = async () => {
               <Button className="flex items-center gap-2 ">
                 <PenBox size={18} />
                 <span className="hidden md:inline"> Add Transaction</span>
+              </Button>
+            </Link>
+            <Link href={"/categories"}>
+              <Button variant={"outline"} className="flex items-center gap-2 ">
+                <span className="hidden md:inline">Categories</span>
               </Button>
             </Link>
           </SignedIn>

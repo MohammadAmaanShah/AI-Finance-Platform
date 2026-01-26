@@ -9,7 +9,12 @@
     "start": "next start",
     "lint": "eslint",
     "postinstall": "prisma generate"
+  
   },
+ "prisma": {
+  "seed": "node prisma/seed.js"
+},
+
   "dependencies": {
     "@arcjet/next": "^1.0.0-beta.16",
     "@clerk/nextjs": "^6.36.5",
