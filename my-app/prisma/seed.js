@@ -4,18 +4,18 @@ const prisma = new PrismaClient();
 
 async function main() {
   const predefinedCategories = [
-    "Food",
-    "Rent",
-    "Travel",
-    "Shopping",
-    "Entertainment",
-    "Utilities",
-    "Healthcare",
-    "Salary",
-    "Freelance",
-    "Business",
-    "Interest",
-    "Investments",
+    "food",
+    "rent",
+    "travel",
+    "shopping",
+    "entertainment",
+    "utilities",
+    "healthcare",
+    "salary",
+    "freelance",
+    "business",
+    "interest",
+    "investments",
   ];
 
   for (const name of predefinedCategories) {

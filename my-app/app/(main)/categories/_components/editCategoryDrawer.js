@@ -1,5 +1,4 @@
 "use client";
-
 import {
   Drawer,
   DrawerClose,
@@ -37,7 +36,6 @@ const EditCategoryDrawer = ({
   const handleEditSubmit = async (e) => {
     e.preventDefault();
 
-    console.log("great");
     await editFn(selectedId, newName);
   };
 

@@ -26,7 +26,7 @@ export async function createCategory(categoryName) {
     }
     const userCategory = await db.category.findFirst({
       where: {
-        name: categoryName,
+        name: categoryName.toLowerCase(),
         userId: user.id,
       },
     });

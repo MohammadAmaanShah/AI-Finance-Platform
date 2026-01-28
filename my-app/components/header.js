@@ -10,7 +10,7 @@ import {
   UserAvatar,
   UserButton,
 } from "@clerk/nextjs";
-import { LayoutDashboard, PenBox } from "lucide-react";
+import { LayoutDashboard, PenBox, Wallet } from "lucide-react";
 import { Layers } from "lucide-react";
 import { checkUser } from "@/lib/checkUser";
 
@@ -48,6 +48,15 @@ const Header = async () => {
                 >
                   <Layers size={18} />
                   <span className="hidden md:inline">Categories</span>
+                </Button>
+              </Link>
+              <Link
+                href={"/budgets"}
+                className="text-gray-600 hover:text-blue-600 flex items-center gap-2"
+              >
+                <Button variant="outline" className="hover:text-blue-600">
+                  <Wallet size={18} />
+                  <span className="hidden md:inline">Budgets</span>
                 </Button>
               </Link>
               <Link href={"/transaction/create"}>
