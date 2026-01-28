@@ -17,7 +17,7 @@ export default function RootLayout({ children }) {
           <Toaster richColors />
           <Header />
           <div className="min-h-screen overflow-x-hidden">{children}</div>
-          <footer className="bg-blue-50 py-12">
+          <footer className="bg-blue-50 py-12 mt-6">
             <div className="container mx-auto px-4 text-center text-gray-600">
               <p>Made with 💗 by Amaan Shah</p>
             </div>

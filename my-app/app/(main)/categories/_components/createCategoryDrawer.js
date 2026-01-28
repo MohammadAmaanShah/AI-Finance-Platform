@@ -10,24 +10,51 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "@/components/ui/drawer";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import React from "react";
+import { Input } from "@/components/ui/input";
 
-const CreateCategoryDrawer = ({ isopen, onClose }) => {
+const CreateCategoryDrawer = ({
+  isOpen,
+  onClose,
+  createCategoryFn,
+  isLoading,
+}) => {
+  const [name, setName] = useState("");
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    await createCategoryFn(name);
+  };
+
   return (
     <div>
-      <Drawer open={isopen} onOoenChange={onClose}>
-        <DrawerContent>
+      <Drawer open={isOpen} onOpenChange={onClose}>
+        <DrawerContent className="my-4 px-3">
           <DrawerHeader>
-            <DrawerTitle>Are you absolutely sure?</DrawerTitle>
-            <DrawerDescription>This action cannot be undone.</DrawerDescription>
+            <DrawerTitle>Create New Category</DrawerTitle>
           </DrawerHeader>
           <DrawerFooter>
-            <Button>Submit</Button>
-            <DrawerClose>
-              <Button variant="outline">Cancel</Button>
-            </DrawerClose>
+            <form className="space-y-3" onSubmit={(e) => handleSubmit(e)}>
+              <Input
+                placeholder="Enter new category"
+                value={name}
+                onChange={(e) => {
+                  setName(e.target.value);
+                }}
+              />
+              <Button className="w-full" type="submit">
+                Submit
+              </Button>
+            </form>
           </DrawerFooter>
+          <DrawerClose asChild>
+            <Button disabled={isLoading} variant="outline">
+              Cancel
+            </Button>
+          </DrawerClose>
         </DrawerContent>
       </Drawer>
     </div>
