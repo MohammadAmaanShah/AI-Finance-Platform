@@ -4,6 +4,7 @@ import { auth } from "@clerk/nextjs/server";
 import { db } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { success } from "zod";
+import { Decimal } from "@prisma/client/runtime/library";
 
 let prisma = db;
 
@@ -91,165 +92,117 @@ export async function updateBudget(amount) {
 
 // <<<<<<<<<<<<------------------------------------ THIS IS NEW BUDGET ----------------------------------------->>>>>>>>>>>>
 
-export async function createBudget(formData) {
-  const { userId } = auth();
-  if (!userId) throw new Error("Unauthorized");
+export async function getBudgetsByAccount(accountId) {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorised");
 
-  const accountId = formData.accountId;
-  const categoryId = formData.categoryId || null;
-  const amount = Number(formData.amount);
-
-  if (!accountId || !amount) {
-    throw new Error("Missing required fields");
-  }
-
-  // 1️⃣ Verify account ownership
-  const account = await prisma.account.findFirst({
-    where: { id: accountId, userId },
+  const user = await db.user.findUnique({
+    where: { clerkUserId: userId },
   });
-  if (!account) throw new Error("Account not found");
+  if (!user) throw new Error("User not found");
 
-  // 2️⃣ Verify category (if category budget)
-  if (categoryId) {
-    const category = await prisma.category.findFirst({
-      where: { id: categoryId },
+  const budgets = await db.budget.findMany({
+    where: {
+      userId: user.id,
+      accountId,
+    },
+    include: {
+      category: true,
+    },
+    orderBy: {
+      createdAt: "asc",
+    },
+  });
+
+  // ✅ SERIALIZE DECIMALS
+  return budgets.map((b) => ({
+    ...b,
+    amount: Number(b.amount),
+  }));
+}
+
+export async function upsertAccountBudget(accountId, amount) {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorised");
+
+  const user = await db.user.findUnique({
+    where: { clerkUserId: userId },
+  });
+  if (!user) throw new Error("User not found");
+
+  // 🔑 find existing account-level budget (categoryId = null)
+  const existingBudget = await db.budget.findFirst({
+    where: {
+      userId: user.id,
+      accountId,
+      categoryId: null,
+    },
+  });
+
+  if (existingBudget) {
+    // UPDATE
+    return await db.budget.update({
+      where: { id: existingBudget.id },
+      data: {
+        amount,
+      },
     });
-    if (!category) throw new Error("Category not found");
   }
 
-  // 3️⃣ Prevent duplicate budgets
-  const existing = await prisma.budget.findFirst({
-    where: { accountId, categoryId },
-  });
-  if (existing) {
-    throw new Error("Budget already exists for this account/category");
-  }
-
-  // 4️⃣ Create budget
-  await prisma.budget.create({
+  // CREATE
+  return await db.budget.create({
     data: {
+      userId: user.id,
+      accountId,
+      categoryId: null,
       amount,
-      userId,
+    },
+  });
+}
+
+export async function upsertCategoryBudget(accountId, categoryId, amount) {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorised");
+
+  const user = await db.user.findUnique({
+    where: { clerkUserId: userId },
+  });
+  if (!user) throw new Error("User not found");
+
+  return await db.budget.upsert({
+    where: {
+      accountId_categoryId: {
+        accountId,
+        categoryId,
+      },
+    },
+    update: {
+      amount,
+    },
+    create: {
+      userId: user.id,
       accountId,
       categoryId,
+      amount,
     },
   });
-
-  revalidatePath("/budgets");
 }
 
-export async function getBudgets() {
+export async function deleteBudget(accountId, categoryId) {
   const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  if (!userId) throw new Error("Unauthorised");
 
-  // 1️⃣ Fetch all budgets of user
-  const budgets = await prisma.budget.findMany({
-    where: { userId },
-    include: {
-      account: true,
-      category: true, // null = whole account budget
-    },
-    orderBy: { createdAt: "desc" },
+  const user = await db.user.findUnique({
+    where: { clerkUserId: userId },
   });
+  if (!user) throw new Error("User not found");
 
-  // 2️⃣ Calculate spent for each budget
-  const finalBudgets = [];
-
-  for (const budget of budgets) {
-    const whereClause = {
-      accountId: budget.accountId,
-      type: "EXPENSE",
-    };
-
-    // category budget vs account budget
-    if (budget.categoryId) {
-      whereClause.categoryId = budget.categoryId;
-    }
-
-    const spentAgg = await prisma.transaction.aggregate({
-      _sum: { amount: true },
-      where: whereClause,
-    });
-
-    const spent = Number(spentAgg._sum.amount || 0);
-    const limit = Number(budget.amount);
-
-    finalBudgets.push({
-      id: budget.id,
-      amount: limit,
-      spent,
-      remaining: limit - spent,
-      percentage: limit > 0 ? Math.min((spent / limit) * 100, 100) : 0,
-
-      account: {
-        id: budget.account.id,
-        name: budget.account.name,
+  return await db.budget.delete({
+    where: {
+      accountId_categoryId: {
+        accountId,
+        categoryId: categoryId ?? null,
       },
-
-      category: budget.category
-        ? {
-            id: budget.category.id,
-            name: budget.category.name,
-          }
-        : null, // 👈 whole account budget
-    });
-  }
-
-  return finalBudgets;
-}
-
-export async function updatedBudget(budgetId, newAmount) {
-  const { userId } = auth();
-  if (!userId) throw new Error("Unauthorized");
-
-  if (!budgetId || !newAmount) {
-    throw new Error("Invalid data");
-  }
-
-  // Ensure budget belongs to user
-  const budget = await prisma.budget.findFirst({
-    where: {
-      id: budgetId,
-      userId,
     },
   });
-
-  if (!budget) {
-    throw new Error("Budget not found");
-  }
-
-  await prisma.budget.update({
-    where: { id: budgetId },
-    data: {
-      amount: Number(newAmount),
-    },
-  });
-
-  revalidatePath("/budgets");
-}
-
-export async function deleteBudget(budgetId) {
-  const { userId } = auth();
-  if (!userId) throw new Error("Unauthorized");
-
-  if (!budgetId) {
-    throw new Error("Budget ID required");
-  }
-
-  const budget = await prisma.budget.findFirst({
-    where: {
-      id: budgetId,
-      userId,
-    },
-  });
-
-  if (!budget) {
-    throw new Error("Budget not found");
-  }
-
-  await prisma.budget.delete({
-    where: { id: budgetId },
-  });
-
-  revalidatePath("/budgets");
 }

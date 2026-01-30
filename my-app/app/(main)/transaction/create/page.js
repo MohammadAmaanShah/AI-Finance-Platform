@@ -1,7 +1,6 @@
 "use server";
-
 import { getUserAccounts } from "@/actions/dashboard";
-import { defaultCategories } from "@/data/categories";
+// import { defaultCategories } from "@/data/categories";
 import { AddTransactionForm } from "../_components/transaction-form";
 import { getTransaction } from "@/actions/transaction";
 import { getCategories } from "@/actions/category";
@@ -28,7 +27,7 @@ export default async function AddTransactionPage({ searchParams }) {
       </div>
       <AddTransactionForm
         accounts={accounts}
-        categories={defaultCategories}
+        categories={categ}
         editMode={!!editId}
         initialData={initialData}
         categ={categ}
