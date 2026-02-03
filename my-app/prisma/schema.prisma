@@ -54,6 +54,7 @@ model Transaction {
   date        DateTime
 
   categoryId String
+  
   category   Category @relation(fields: [categoryId], references: [id], onDelete: Restrict)
 
   receiptUrl        String?
@@ -104,6 +105,10 @@ model Category {
 model Budget {
   id            String   @id @default(uuid())
   amount        Decimal
+
+  startDate     DateTime
+  period        BudgetPeriod
+
   lastAlertSent DateTime?
 
   userId String
@@ -112,8 +117,7 @@ model Budget {
   accountId String
   account   Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
 
-  // NULL = whole account budget
-  // NOT NULL = category-specific budget
+
   categoryId String?
   category   Category? @relation(fields: [categoryId], references: [id], onDelete: Cascade)
 
@@ -124,11 +128,20 @@ model Budget {
   @@index([accountId])
   @@index([categoryId])
 
-  // Prevent duplicates
   @@unique([accountId, categoryId])
   @@map("budgets")
 }
 
+
+
+enum BudgetPeriod {
+  DAILY
+  WEEKLY
+  MONTHLY
+  QUARTERLY
+  HALF_YEARLY
+  YEARLY
+}
 
 enum TransactionType {
   INCOME

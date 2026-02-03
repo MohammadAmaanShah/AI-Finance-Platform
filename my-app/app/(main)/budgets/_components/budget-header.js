@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import {
   Select,
   SelectContent,
@@ -9,30 +9,32 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-export default function BudgetHeader({ accounts, selectedAccountId }) {
+import { useParams, useRouter } from "next/navigation";
+
+export default function AccountSelect({ accounts, defaultAcc }) {
+  const [selectedAccount, setSelectedAccount] = useState(defaultAcc);
+
   const router = useRouter();
 
-  const handleChange = (value) => {
-    router.push(`/budgets?account=${value}`);
-    router.refresh(); // 🔥 THIS IS THE FIX
+  const handleChange = (accountId) => {
+    const acc = accounts.find((a) => a.id === accountId);
+    setSelectedAccount(acc);
+    router.push(`/budgets/${acc.id}`);
   };
 
   return (
-    <div className="flex items-center justify-between">
-      <h1 className="text-2xl font-semibold">Budgets</h1>
+    <Select value={selectedAccount?.id} onValueChange={handleChange}>
+      <SelectTrigger className="w-[200px]">
+        <SelectValue placeholder="Select account" />
+      </SelectTrigger>
 
-      <Select value={selectedAccountId} onValueChange={handleChange}>
-        <SelectTrigger className="w-[200px]">
-          <SelectValue placeholder="Select account" />
-        </SelectTrigger>
-        <SelectContent>
-          {accounts.map((acc) => (
-            <SelectItem key={acc.id} value={acc.id}>
-              {acc.name}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-    </div>
+      <SelectContent>
+        {accounts?.map((acc) => (
+          <SelectItem key={acc.id} value={acc.id}>
+            {acc.name}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   );
 }

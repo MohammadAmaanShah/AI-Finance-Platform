@@ -53,11 +53,45 @@ export async function updateDefaultAccount(accountId) {
   }
 }
 
+// export async function getAccountWithTransactions(accountId) {
+//   const { userId } = await auth();
+//   if (!userId) {
+//     throw new Error("Unauthorized");
+//   }
+//   const user = await db.user.findUnique({
+//     where: {
+//       clerkUserId: userId,
+//     },
+//   });
+//   if (!user) {
+//     throw new Error("User not found");
+//   }
+
+//   const account = await db.account.findUnique({
+//     where: { id: accountId, userId: user.id },
+//     include: {
+//       transactions: {
+//         orderBy: { date: "desc" },
+//       },
+//       _count: {
+//         select: { transactions: true },
+//       },
+//     },
+//   });
+//   if (!account) return null;
+
+//   return {
+//     ...serializeTransction(account),
+//     transactions: account.transactions.map(serializeTransction),
+//   };
+// }
+
 export async function getAccountWithTransactions(accountId) {
   const { userId } = await auth();
   if (!userId) {
     throw new Error("Unauthorized");
   }
+
   const user = await db.user.findUnique({
     where: {
       clerkUserId: userId,
@@ -68,21 +102,37 @@ export async function getAccountWithTransactions(accountId) {
   }
 
   const account = await db.account.findUnique({
-    where: { id: accountId, userId: user.id },
+    where: {
+      id: accountId,
+      userId: user.id,
+    },
     include: {
       transactions: {
         orderBy: { date: "desc" },
+        include: {
+          category: {
+            select: {
+              name: true,
+            },
+          },
+        },
       },
       _count: {
         select: { transactions: true },
       },
     },
   });
+
   if (!account) return null;
 
   return {
     ...serializeTransction(account),
-    transactions: account.transactions.map(serializeTransction),
+    transactions: account.transactions.map((tx) =>
+      serializeTransction({
+        ...tx,
+        category: tx.category?.name ?? "Uncategorized",
+      }),
+    ),
   };
 }
 

@@ -57,6 +57,8 @@ import { toast } from "sonner";
 const TransactionTable = ({ transactions }) => {
   // let filteredAndSortedTransactions = transactions;
 
+  console.log(transactions);
+
   const router = useRouter();
 
   const [selectedId, setSelectedId] = useState([]);
@@ -340,10 +342,10 @@ const TransactionTable = ({ transactions }) => {
                     <TableCell>{transaction.description}</TableCell>
                     <TableCell className="capitalize">
                       <span
-                        style={{
-                          background: categoryColors[transaction.category],
-                        }}
-                        className="px-2 py-1 rounded text-white text-sm "
+                        // style={{
+                        //   background: categoryColors[transaction.category],
+                        // }}
+                        className="px-2 py-1 rounded text-sm bg-gray-200  "
                       >
                         {transaction.category}
                       </span>

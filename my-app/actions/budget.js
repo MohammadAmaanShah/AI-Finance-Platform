@@ -5,7 +5,6 @@ import { db } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { success } from "zod";
 import { Decimal } from "@prisma/client/runtime/library";
-
 let prisma = db;
 
 export async function getCurrentBudget(accountId) {
@@ -121,46 +120,63 @@ export async function getBudgetsByAccount(accountId) {
   }));
 }
 
-export async function upsertAccountBudget(accountId, amount) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorised");
+export async function upsertAccountBudget({
+  accountId,
+  amount,
+  startDate,
+  period,
+}) {
+  const { userId: clerkUserId } = await auth();
 
-  const user = await db.user.findUnique({
-    where: { clerkUserId: userId },
+  if (!clerkUserId) {
+    throw new Error("Unauthorized");
+  }
+
+  // 🔑 GET DB USER
+  const user = await prisma.user.findUnique({
+    where: { clerkUserId },
   });
-  if (!user) throw new Error("User not found");
 
-  // 🔑 find existing account-level budget (categoryId = null)
-  const existingBudget = await db.budget.findFirst({
+  if (!user) {
+    throw new Error("User not found in database");
+  }
+
+  // 🔍 Find existing account-level budget
+  const existingBudget = await prisma.budget.findFirst({
     where: {
-      userId: user.id,
       accountId,
+      userId: user.id, // ✅ DB user id
       categoryId: null,
     },
   });
 
+  // 🟢 UPDATE
   if (existingBudget) {
-    // UPDATE
-    return await db.budget.update({
+    return prisma.budget.update({
       where: { id: existingBudget.id },
       data: {
         amount,
+        startDate: new Date(startDate),
+        period,
       },
     });
   }
 
-  // CREATE
-  return await db.budget.create({
+  // 🔵 CREATE
+  return prisma.budget.create({
     data: {
-      userId: user.id,
+      amount,
+      startDate: new Date(startDate),
+      period,
+
+      userId: user.id, // ✅ FIX HERE
       accountId,
       categoryId: null,
-      amount,
     },
   });
 }
 
-export async function upsertCategoryBudget(accountId, categoryId, amount) {
+export async function deleteBudget(accountId, categoryId = null) {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorised");
 
@@ -169,40 +185,97 @@ export async function upsertCategoryBudget(accountId, categoryId, amount) {
   });
   if (!user) throw new Error("User not found");
 
-  return await db.budget.upsert({
+  // 🔑 Step 1: find the budget first
+  const budget = await db.budget.findFirst({
     where: {
-      accountId_categoryId: {
-        accountId,
-        categoryId,
+      userId: user.id,
+      accountId,
+      categoryId: categoryId ?? null,
+    },
+  });
+
+  if (!budget) {
+    throw new Error("Budget not found");
+  }
+
+  // 🔑 Step 2: delete by PRIMARY KEY (id)
+  return await db.budget.delete({
+    where: { id: budget.id },
+  });
+}
+
+//  <------------------------------------------------------category budget ------------------------------------------>
+
+export async function getCategoryBudgets(accountId) {
+  const budgets = await prisma.budget.findMany({
+    where: {
+      accountId,
+      categoryId: { not: null },
+    },
+    include: {
+      category: true,
+    },
+  });
+
+  // 🔥 SERIALIZE (Decimal → number)
+  return budgets.map((b) => ({
+    id: b.id,
+    categoryId: b.categoryId,
+    categoryName: b.category.name,
+    amount: Number(b.amount),
+    startDate: b.startDate.toISOString(),
+    period: b.period,
+  }));
+}
+
+export async function upsertCategoryBudget({
+  accountId,
+  categoryId,
+  amount,
+  startDate,
+  period,
+}) {
+  const { userId } = await auth();
+  if (!userId) {
+    throw new Error("Unauthorized");
+  }
+  const user = await db.user.findUnique({
+    where: {
+      clerkUserId: userId,
+    },
+  });
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  // 🔍 check existing category budget
+  const existing = await db.budget.findFirst({
+    where: {
+      userId: user.id,
+      accountId,
+      categoryId, // 👈 category-specific
+    },
+  });
+
+  if (existing) {
+    return db.budget.update({
+      where: { id: existing.id },
+      data: {
+        amount,
+        startDate: new Date(startDate),
+        period,
       },
-    },
-    update: {
-      amount,
-    },
-    create: {
+    });
+  }
+
+  return db.budget.create({
+    data: {
       userId: user.id,
       accountId,
       categoryId,
       amount,
-    },
-  });
-}
-
-export async function deleteBudget(accountId, categoryId) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorised");
-
-  const user = await db.user.findUnique({
-    where: { clerkUserId: userId },
-  });
-  if (!user) throw new Error("User not found");
-
-  return await db.budget.delete({
-    where: {
-      accountId_categoryId: {
-        accountId,
-        categoryId: categoryId ?? null,
-      },
+      startDate: new Date(startDate),
+      period,
     },
   });
 }

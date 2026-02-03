@@ -127,7 +127,7 @@
 
 @layer utilities {
   .gradient {
-    @apply bg-gradient-to-br from-blue-600 to-purple-600;
+    @apply bg-linear-to-br from-blue-600 to-purple-600;
   }
 
   .gradient-title {
@@ -147,5 +147,9 @@
 }
 
 .hero-image.scrolled {
-  transform: rotateX(0deg) scale(1) translateY(40px) ;
+  transform: rotateX(0deg) scale(1) translateY(40px);
 }
+
+/* * {
+  border: 1px solid red;
+} */
