@@ -13,6 +13,8 @@ const DashboardPage = async () => {
 
   const defaultAccount = accounts?.find((account) => account.isDefault);
   const transactions = await getDashboardData();
+  console.log(transactions);
+
   let budgetData = null;
 
   if (defaultAccount) {

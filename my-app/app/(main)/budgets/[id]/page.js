@@ -10,9 +10,12 @@ import { getAccountWithTransactions } from "@/actions/account";
 import { getCategoryBudgets } from "@/actions/budget";
 import { getCategories } from "@/actions/category";
 import CategoryBudgetPage from "../_components/category-budget-page";
+import { deleteCategoryBudget } from "@/actions/budget";
 
 export default async function BudgetPage({ params }) {
   const { id } = await params;
+
+  const deleteCategoryBudgets = deleteCategoryBudget;
 
   const accounts = await getUserAccounts();
 
@@ -22,7 +25,6 @@ export default async function BudgetPage({ params }) {
 
   const accountTransaction = await getAccountWithTransactions(id);
 
-  console.log(accountTransaction);
   const budgets = await getBudgetsByAccount(id);
   const categoryBudgets = await getCategoryBudgets(id);
 
@@ -40,6 +42,7 @@ export default async function BudgetPage({ params }) {
         categories={categories}
         categoryBudgets={categoryBudgets}
         account={accountTransaction}
+        deleteCategoryBudget={deleteCategoryBudgets}
       />
     </div>
   );

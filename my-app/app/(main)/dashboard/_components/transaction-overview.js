@@ -75,6 +75,7 @@ export function DashboardOverview({ accounts, transactions }) {
       value: amount,
     }),
   );
+  console.log(currentMonthExpenses);
 
   return (
     <div className="grid gap-4 md:grid-cols-2 mb-5">

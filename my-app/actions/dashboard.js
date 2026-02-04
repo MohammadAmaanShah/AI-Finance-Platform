@@ -4,6 +4,7 @@ import { auth } from "@clerk/nextjs/server";
 import { db } from "@/lib/prisma";
 import { includes } from "zod";
 import { Select } from "react-day-picker";
+import { categories } from "@arcjet/next";
 
 const serializeTransction = (obj) => {
   const serialized = { ...obj };
@@ -117,7 +118,19 @@ export async function getDashboardData() {
   const transactions = await db.transaction.findMany({
     where: { userId: user.id },
     orderBy: { date: "desc" },
+    include: {
+      category: {
+        select: {
+          name: true,
+        },
+      },
+    },
   });
 
-  return transactions.map(serializeTransction);
+  // return transactions.map(serializeTransction);
+
+  return transactions.map((txn) => ({
+    ...serializeTransction(txn),
+    category: txn.category?.name || null,
+  }));
 }

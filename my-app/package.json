@@ -9,12 +9,10 @@
     "start": "next start",
     "lint": "eslint",
     "postinstall": "prisma generate"
-  
   },
- "prisma": {
-  "seed": "node prisma/seed.js"
-},
-
+  "prisma": {
+    "seed": "node prisma/seed.js"
+  },
   "dependencies": {
     "@arcjet/next": "^1.0.0-beta.16",
     "@clerk/nextjs": "^6.36.5",
@@ -34,6 +32,7 @@
     "add": "^2.0.6",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "cmdk": "^1.1.1",
     "date-fns": "^4.1.0",
     "dotenv": "^17.2.3",
     "inngest": "^3.48.1",
@@ -42,6 +41,7 @@
     "next-themes": "^0.4.6",
     "npx": "^10.2.2",
     "popover": "^2.4.1",
+    "radix-ui": "^1.4.3",
     "react": "^19.2.3",
     "react-day-picker": "^9.11.2",
     "react-dom": "^19.2.3",

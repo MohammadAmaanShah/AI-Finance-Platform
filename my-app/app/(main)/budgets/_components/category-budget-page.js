@@ -7,18 +7,25 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import CategoryBudgetCard from "./category-budget-card";
 import { upsertCategoryBudget } from "@/actions/budget";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function CategoryBudgetPage({
   accountId,
   categories, // [{ id, name }]
-  categoryBudgets,
-  account, // [{ id, categoryId, categoryName, amount, startDate, period, spent }]
+  categoryBudgets, // [{ id, categoryId, categoryName, amount, startDate, period }]
+  account, // { transactions: [...] }
+  deleteCategoryBudget, // function for delete
 }) {
   const router = useRouter();
 
   const [editing, setEditing] = useState(false);
   const [selectedCategoryId, setSelectedCategoryId] = useState("");
-
   const [amount, setAmount] = useState("");
   const [startDate, setStartDate] = useState("");
   const [period, setPeriod] = useState("MONTHLY");
@@ -64,79 +71,7 @@ export default function CategoryBudgetPage({
     }
   };
 
-  function isWithinBudgetPeriod(txDate, startDate, period) {
-    const tx = new Date(txDate);
-    const start = new Date(startDate);
-    let end = new Date(start);
-
-    switch (period) {
-      case "DAILY":
-        end.setDate(start.getDate() + 1);
-        break;
-
-      case "WEEKLY":
-        end.setDate(start.getDate() + 7);
-        break;
-
-      case "MONTHLY":
-        end = new Date(
-          start.getFullYear(),
-          start.getMonth() + 1,
-          0,
-          23,
-          59,
-          59,
-        );
-        break;
-
-      case "QUARTERLY":
-        end.setMonth(start.getMonth() + 3);
-        break;
-
-      case "HALF_YEARLY":
-        end.setMonth(start.getMonth() + 6);
-        break;
-
-      case "YEARLY":
-        end.setFullYear(start.getFullYear() + 1);
-        break;
-    }
-
-    return tx >= start && tx <= end;
-  }
-
-  const selectedBudget = categoryBudgets.find(
-    (b) => String(b.categoryId) === String(selectedCategoryId),
-  );
-
-  let spent = 0;
-
-  if (selectedBudget) {
-    spent = account.transactions
-      // 1️⃣ only expenses
-      .filter((tx) => tx.type === "EXPENSE")
-
-      // 2️⃣ only selected category
-      .filter((tx) => tx.categoryId === selectedCategoryId)
-
-      // 3️⃣ only within budget period
-      .filter((tx) =>
-        isWithinBudgetPeriod(
-          tx.date,
-          selectedBudget.startDate,
-          selectedBudget.period,
-        ),
-      )
-
-      // 4️⃣ sum amounts
-      .reduce((sum, tx) => sum + Number(tx.amount), 0);
-  }
   // ================= UI =================
-  const budgetsToRender = selectedCategoryId
-    ? categoryBudgets.filter(
-        (b) => String(b.categoryId) === String(selectedCategoryId),
-      )
-    : categoryBudgets;
 
   return (
     <div className="space-y-6">
@@ -146,7 +81,6 @@ export default function CategoryBudgetPage({
       {/* FORM */}
       {editing && (
         <div className="max-w-md rounded-xl border p-4 space-y-3">
-          {/* CATEGORY DROPDOWN */}
           <select
             className="w-full border rounded-md px-3 py-2 text-sm"
             value={selectedCategoryId}
@@ -160,7 +94,6 @@ export default function CategoryBudgetPage({
             ))}
           </select>
 
-          {/* FORM FIELDS (only after category selected) */}
           {selectedCategoryId && (
             <>
               <Input
@@ -188,6 +121,22 @@ export default function CategoryBudgetPage({
                 <option value="HALF_YEARLY">Half Yearly</option>
                 <option value="YEARLY">Yearly</option>
               </select>
+              {/* <Select
+  value={selectedCategoryId}
+  onValueChange={(value) => setSelectedCategoryId(value)}
+>
+  <SelectTrigger className="w-full">
+    <SelectValue placeholder="Select Category" />
+  </SelectTrigger>
+
+  <SelectContent>
+    {categories.map((cat) => (
+      <SelectItem key={cat.id} value={cat.id}>
+        {cat.name}
+      </SelectItem>
+    ))}
+  </SelectContent>
+</Select> */}
 
               <div className="flex gap-2">
                 <Button onClick={handleSave}>Save</Button>
@@ -206,31 +155,17 @@ export default function CategoryBudgetPage({
         </div>
       )}
 
-      {/* SHOW ONLY SELECTED CATEGORY BUDGET */}
-      {selectedCategoryId && selectedBudget && (
-        <CategoryBudgetCard
-          accountId={accountId}
-          category={{
-            id: selectedCategoryId,
-            name: categories.find((c) => c.id === selectedCategoryId)?.name,
-          }}
-          budget={selectedBudget}
-          spent={spent}
-        />
-      )}
-      {/* CATEGORY BUDGET CARDS */}
-      {/* {budgetsToRender.map((budget) => (
-        <CategoryBudgetCard
-          accountId={accountId}
-          category={{
-            id: selectedCategoryId,
-            name: categories.find((c) => c.id === selectedCategoryId)?.name,
-          }}
-          budget={selectedBudget}
-          spent={spent}
-          key={budget.id}
-        />
-      ))} */}
+      {/* ALL CATEGORY BUDGET CARDS */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {categoryBudgets.map((budget) => (
+          <CategoryBudgetCard
+            key={budget.id}
+            budget={budget}
+            transactions={account.transactions}
+            deleteCategoryBudget={deleteCategoryBudget}
+          />
+        ))}
+      </div>
     </div>
   );
 }

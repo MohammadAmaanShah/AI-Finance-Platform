@@ -279,3 +279,33 @@ export async function upsertCategoryBudget({
     },
   });
 }
+
+export async function deleteCategoryBudget(budgetId) {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
+  const user = await db.user.findUnique({
+    where: { clerkUserId: userId },
+  });
+
+  if (!user) throw new Error("User not found");
+
+  // 🔐 Verify ownership using ONLY budgetId
+  const budget = await db.budget.findFirst({
+    where: {
+      id: budgetId,
+      userId: user.id,
+    },
+    select: { id: true },
+  });
+
+  if (!budget) {
+    throw new Error("Budget not found or access denied");
+  }
+
+  await db.budget.delete({
+    where: { id: budgetId },
+  });
+
+  return { success: true };
+}

@@ -53,7 +53,7 @@ export async function updateDefaultAccount(accountId) {
   }
 }
 
-// export async function getAccountWithTransactions(accountId) {
+// export async function getAccountWithTransactionsssss(accountId) {
 //   const { userId } = await auth();
 //   if (!userId) {
 //     throw new Error("Unauthorized");

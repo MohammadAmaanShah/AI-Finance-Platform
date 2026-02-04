@@ -1,59 +1,120 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Trash2 } from "lucide-react";
-import { deleteBudget } from "@/actions/budget";
-import { useRouter } from "next/navigation";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { Trash } from "lucide-react";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 export default function CategoryBudgetCard({
-  accountId,
-  category,
   budget,
-  spent,
+  transactions,
+  deleteCategoryBudget,
 }) {
+  function isWithinBudgetPeriod(txDate, startDate, period) {
+    const tx = new Date(txDate);
+    const start = new Date(startDate);
+    let end = new Date(start);
+
+    switch (period) {
+      case "DAILY":
+        end.setDate(start.getDate() + 1);
+        break;
+
+      case "WEEKLY":
+        end.setDate(start.getDate() + 7);
+        break;
+
+      case "MONTHLY":
+        end = new Date(
+          start.getFullYear(),
+          start.getMonth() + 1,
+          0,
+          23,
+          59,
+          59,
+        );
+        break;
+
+      case "QUARTERLY":
+        end.setMonth(start.getMonth() + 3);
+        break;
+
+      case "HALF_YEARLY":
+        end.setMonth(start.getMonth() + 6);
+        break;
+
+      case "YEARLY":
+        end.setFullYear(start.getFullYear() + 1);
+        break;
+    }
+
+    return tx >= start && tx <= end;
+  }
+
   const router = useRouter();
 
-  const progress =
-    budget.amount > 0 ? Math.min((spent / budget.amount) * 100, 100) : 0;
+  console.log(budget.id);
 
-  const progressColor =
-    progress < 50
-      ? "bg-green-500"
-      : progress < 90
-        ? "bg-orange-500"
-        : "bg-red-500";
+  let budgetId = budget.id;
+
+  const spent = transactions
+
+    .filter((tx) => tx.type === "EXPENSE")
+    .filter((tx) => tx.categoryId === budget.categoryId)
+    .filter((tx) =>
+      isWithinBudgetPeriod(tx.date, budget.startDate, budget.period),
+    )
+    .reduce((sum, tx) => sum + Number(tx.amount), 0);
+
+  const remaining = budget.amount - spent;
+  const progress = Math.min((spent / budget.amount) * 100, 100);
 
   const handleDelete = async () => {
-    await deleteBudget(accountId, category.id);
-    toast.success("Budget deleted");
-    router.refresh();
+    try {
+      await deleteCategoryBudget(budgetId);
+
+      toast.success("Category Budget Deleted Sucessfully");
+    } catch (error) {
+      toast.error("Failed to delete ");
+    } finally {
+      router.refresh();
+    }
   };
 
   return (
-    <div className="max-w-md border rounded-xl p-4 space-y-3">
-      <h3 className="font-semibold">{category.name}</h3>
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex justify-between items-center">
+          <span>{budget.categoryName}</span>
+          <span className="text-sm text-muted-foreground">{budget.period}</span>
+        </CardTitle>
+      </CardHeader>
 
-      <p className="text-sm">
-        ₹{spent} spent of ₹{budget.amount}
-      </p>
+      <CardContent className="space-y-3 ">
+        <div className="text-sm">
+          <p>Budget: ₹{budget.amount}</p>
+          <p>Spent: ₹{spent}</p>
+          <p
+            className={
+              remaining < 0 ? "text-red-500 font-semibold" : "text-green-600"
+            }
+          >
+            Remaining: ₹{remaining}
+          </p>
+        </div>
 
-      <div className="h-2 bg-muted rounded overflow-hidden">
-        <div
-          className={`h-full ${progressColor}`}
-          style={{ width: `${progress}%` }}
-        />
-      </div>
+        <Progress value={progress} />
 
-      <p className="text-xs text-muted-foreground">
-        {budget.period} • Starting{" "}
-        {new Date(budget.startDate).toLocaleDateString()}
-      </p>
-
-      <Button size="sm" variant="destructive" onClick={handleDelete}>
-        <Trash2 size={14} className="mr-1" />
-        Delete Budget
-      </Button>
-    </div>
+        {remaining < 0 && (
+          <p className="text-xs text-red-500">
+            You’ve exceeded this category budget
+          </p>
+        )}
+        <div className="w-full flex justify-end" onClick={() => handleDelete()}>
+          <Trash size={18} className="text-red-600 cursor-pointer " />
+        </div>
+      </CardContent>
+    </Card>
   );
 }
