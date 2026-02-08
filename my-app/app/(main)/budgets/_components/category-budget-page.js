@@ -7,84 +7,98 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import CategoryBudgetCard from "./category-budget-card";
 import { upsertCategoryBudget } from "@/actions/budget";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Pencil } from "lucide-react";
 
 export default function CategoryBudgetPage({
   accountId,
-  categories, // [{ id, name }]
-  categoryBudgets, // [{ id, categoryId, categoryName, amount, startDate, period }]
-  account, // { transactions: [...] }
-  deleteCategoryBudget, // function for delete
+  categories,
+  categoryBudgets,
+  account,
+  deleteCategoryBudget,
 }) {
   const router = useRouter();
 
-  const [editing, setEditing] = useState(false);
-  const [selectedCategoryId, setSelectedCategoryId] = useState("");
+  const [openForm, setOpenForm] = useState(false);
+  const [editingBudget, setEditingBudget] = useState(null);
+
+  const [categoryId, setCategoryId] = useState("");
   const [amount, setAmount] = useState("");
   const [startDate, setStartDate] = useState("");
   const [period, setPeriod] = useState("MONTHLY");
 
+  // ================= OPEN CREATE =================
+  const openCreate = () => {
+    setEditingBudget(null);
+    setCategoryId("");
+    setAmount("");
+    setStartDate("");
+    setPeriod("MONTHLY");
+    setOpenForm(true);
+  };
+
+  // ================= OPEN EDIT =================
+  const openEdit = (budget) => {
+    setEditingBudget(budget);
+    setCategoryId(budget.categoryId);
+    setAmount(String(budget.amount));
+    setStartDate(budget.startDate.slice(0, 10));
+    setPeriod(budget.period);
+    setOpenForm(true);
+  };
+
   // ================= SAVE =================
-
   const handleSave = async () => {
-    if (!selectedCategoryId) {
-      toast.error("Select a category");
-      return;
-    }
-
-    if (!amount || Number(amount) <= 0) {
-      toast.error("Enter valid amount");
-      return;
-    }
-
-    if (!startDate) {
-      toast.error("Select start date");
-      return;
-    }
+    if (!categoryId) return toast.error("Select category");
+    if (!amount || Number(amount) <= 0) return toast.error("Invalid amount");
+    if (!startDate) return toast.error("Select start date");
 
     try {
-      await upsertCategoryBudget({
-        accountId,
-        categoryId: selectedCategoryId,
-        amount: Number(amount),
-        startDate,
-        period,
-      });
+      if (editingBudget) {
+        console.log((editingBudget.id = "--------------------"));
+        console.log(amount);
+        console.log(startDate);
+        console.log(period);
 
-      toast.success("Category budget saved");
+        await upsertCategoryBudget({
+          accountId,
+          categoryId,
+          id: editingBudget.id,
+          amount: Number(amount),
+          startDate,
+          period,
+        });
+        toast.success("Category budget updated");
+      } else {
+        await upsertCategoryBudget({
+          accountId,
+          categoryId,
+          amount: Number(amount),
+          startDate,
+          period,
+        });
+        toast.success("Category budget created");
+      }
 
-      setEditing(false);
-      setSelectedCategoryId("");
-      setAmount("");
-      setStartDate("");
-      setPeriod("MONTHLY");
-
+      setOpenForm(false);
       router.refresh();
-    } catch (e) {
-      toast.error("Failed to save budget");
+    } catch {
+      toast.error("Something went wrong");
     }
   };
 
   // ================= UI =================
-
   return (
     <div className="space-y-6">
-      {/* SET BUTTON */}
-      <Button onClick={() => setEditing(true)}>Set Category Budget</Button>
+      <Button onClick={openCreate}>Set Category Budget</Button>
 
       {/* FORM */}
-      {editing && (
-        <div className="max-w-md rounded-xl border p-4 space-y-3">
+      {openForm && (
+        <div className="max-w-md rounded-xl border p-4 space-y-4 bg-background">
           <select
             className="w-full border rounded-md px-3 py-2 text-sm"
-            value={selectedCategoryId}
-            onChange={(e) => setSelectedCategoryId(e.target.value)}
+            value={categoryId}
+            onChange={(e) => setCategoryId(e.target.value)}
+            disabled={!!editingBudget}
           >
             <option value="">Select Category</option>
             {categories.map((cat) => (
@@ -94,68 +108,44 @@ export default function CategoryBudgetPage({
             ))}
           </select>
 
-          {selectedCategoryId && (
-            <>
-              <Input
-                type="number"
-                placeholder="Budget amount"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-              />
+          <Input
+            type="number"
+            placeholder="Budget amount"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+          />
 
-              <Input
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-              />
+          <Input
+            type="date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+          />
 
-              <select
-                className="w-full border rounded-md px-3 py-2 text-sm"
-                value={period}
-                onChange={(e) => setPeriod(e.target.value)}
-              >
-                <option value="DAILY">Daily</option>
-                <option value="WEEKLY">Weekly</option>
-                <option value="MONTHLY">Monthly</option>
-                <option value="QUARTERLY">Quarterly</option>
-                <option value="HALF_YEARLY">Half Yearly</option>
-                <option value="YEARLY">Yearly</option>
-              </select>
-              {/* <Select
-  value={selectedCategoryId}
-  onValueChange={(value) => setSelectedCategoryId(value)}
->
-  <SelectTrigger className="w-full">
-    <SelectValue placeholder="Select Category" />
-  </SelectTrigger>
+          <select
+            className="w-full border rounded-md px-3 py-2 text-sm"
+            value={period}
+            onChange={(e) => setPeriod(e.target.value)}
+          >
+            <option value="DAILY">Daily</option>
+            <option value="WEEKLY">Weekly</option>
+            <option value="MONTHLY">Monthly</option>
+            <option value="QUARTERLY">Quarterly</option>
+            <option value="HALF_YEARLY">Half Yearly</option>
+            <option value="YEARLY">Yearly</option>
+          </select>
 
-  <SelectContent>
-    {categories.map((cat) => (
-      <SelectItem key={cat.id} value={cat.id}>
-        {cat.name}
-      </SelectItem>
-    ))}
-  </SelectContent>
-</Select> */}
-
-              <div className="flex gap-2">
-                <Button onClick={handleSave}>Save</Button>
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setEditing(false);
-                    setSelectedCategoryId("");
-                  }}
-                >
-                  Cancel
-                </Button>
-              </div>
-            </>
-          )}
+          <div className="flex gap-2">
+            <Button onClick={handleSave}>
+              {editingBudget ? "Update" : "Save"}
+            </Button>
+            <Button variant="outline" onClick={() => setOpenForm(false)}>
+              Cancel
+            </Button>
+          </div>
         </div>
       )}
 
-      {/* ALL CATEGORY BUDGET CARDS */}
+      {/* BUDGET CARDS */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {categoryBudgets.map((budget) => (
           <CategoryBudgetCard
@@ -163,6 +153,7 @@ export default function CategoryBudgetPage({
             budget={budget}
             transactions={account.transactions}
             deleteCategoryBudget={deleteCategoryBudget}
+            onEdit={() => openEdit(budget)}
           />
         ))}
       </div>

@@ -2,14 +2,15 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Trash } from "lucide-react";
+import { Trash, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-
+import { Button } from "@/components/ui/button";
 export default function CategoryBudgetCard({
   budget,
   transactions,
   deleteCategoryBudget,
+  onEdit,
 }) {
   function isWithinBudgetPeriod(txDate, startDate, period) {
     const tx = new Date(txDate);
@@ -54,8 +55,6 @@ export default function CategoryBudgetCard({
 
   const router = useRouter();
 
-  console.log(budget.id);
-
   let budgetId = budget.id;
 
   const spent = transactions
@@ -91,7 +90,15 @@ export default function CategoryBudgetCard({
         </CardTitle>
       </CardHeader>
 
-      <CardContent className="space-y-3 ">
+      <CardContent className="space-y-3 relative">
+        <Button
+          size="icon"
+          variant="ghost"
+          className=" absolute right-5 top-5"
+          onClick={onEdit}
+        >
+          <Pencil className="h-4 w-4" />
+        </Button>
         <div className="text-sm">
           <p>Budget: ₹{budget.amount}</p>
           <p>Spent: ₹{spent}</p>
