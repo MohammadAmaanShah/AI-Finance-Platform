@@ -8,6 +8,7 @@ import { getCurrentBudget } from "@/actions/budget";
 import BudgetProgress from "./_components/budget_progress";
 import { DashboardOverview } from "./_components/transaction-overview";
 import { getDashboardData } from "@/actions/dashboard";
+
 const DashboardPage = async () => {
   const accounts = await getUserAccounts();
 
